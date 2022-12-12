@@ -52,22 +52,19 @@ func resourceConnection() *schema.Resource {
 				},
 			},
 			"certificate": {
-				Type:      schema.TypeString,
-				Optional:  true,
-				ForceNew:  true,
-				Sensitive: true,
-				DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
-					return d.Id() != ""
-				},
+				Type:        schema.TypeString,
+				Description: "Base64 encoded certificate body for server authentication (when " +
+										 "appropriate for the dialect). Due to limitations in the Looker " +
+										 "API, changes made outside of Terraform cannot be detected.",
+				Optional:    true,
+				Sensitive:   true,
+				StateFunc:   hash,
 			},
 			"file_type": {
 				Type:         schema.TypeString,
+				Description:  "Certificate key file type (.json or .p12).",
 				Optional:     true,
-				ForceNew:     true,
 				ValidateFunc: validation.StringInSlice([]string{".json", ".p12"}, false),
-				DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
-					return d.Id() != ""
-				},
 			},
 			"database": {
 				Type:     schema.TypeString,
@@ -326,7 +323,7 @@ func expandWriteDBConnection(d *schema.ResourceData) (*apiclient.WriteDBConnecti
 
 	// optional values
 	if v, ok := d.GetOk("port"); ok {
-		port := v.(string)  // for api breaking change
+		port := v.(string) // for api breaking change
 		writeDBConnection.Port = &port
 	}
 	if v, ok := d.GetOk("password"); ok {
@@ -415,7 +412,7 @@ func expandWriteDBConnection(d *schema.ResourceData) (*apiclient.WriteDBConnecti
 		writeDBConnection.DisableContextComment = &disable_context_comment
 	}
 	if v, ok := d.GetOk("oauth_application_id"); ok {
-		oauthApplicationId := v.(string)  // for api breaking change
+		oauthApplicationId := v.(string) // for api breaking change
 		writeDBConnection.OauthApplicationId = &oauthApplicationId
 	}
 
@@ -478,12 +475,6 @@ func flattenConnection(connection apiclient.DBConnection, d *schema.ResourceData
 		return err
 	}
 	if err := d.Set("password", connection.Password); err != nil {
-		return err
-	}
-	if err := d.Set("certificate", connection.Certificate); err != nil {
-		return err
-	}
-	if err := d.Set("file_type", connection.FileType); err != nil {
 		return err
 	}
 	if err := d.Set("database", connection.Database); err != nil {
