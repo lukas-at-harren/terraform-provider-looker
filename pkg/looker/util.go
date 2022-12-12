@@ -1,6 +1,8 @@
 package looker
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"strings"
 
@@ -59,5 +61,13 @@ func updateApiSessionWorkspaceId(client *apiclient.LookerSDK, workspaceId string
 	}
 	_, err := client.UpdateSession(writeApiSession, nil)
 	return err
+}
+
+func hash(val interface{}) string {
+	if val == nil || val.(string) == "" {
+		return ""
+	}
+	sha := sha256.Sum256([]byte(val.(string)))
+	return hex.EncodeToString(sha[:])
 }
 
